@@ -1,0 +1,1826 @@
+openapi: 3.1.0
+info:
+  title: API Mensajería urbana
+  description: 'Persistencia políglota: PostgreSQL (estado y asignaciones), MongoDB (historial y evidencias) y Redis
+    (estado temporal). Las cabeceras X-Actor-Id y X-Actor-Rol identifican al usuario (simplificación del laboratorio;
+    no es autenticación real).'
+  version: 1.0.0
+paths:
+  /health:
+    get:
+      tags:
+      - Salud
+      summary: Estado de la API y sus dependencias
+      operationId: salud_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '503':
+          description: Alguna dependencia caída (estado 'degradado')
+  /zonas:
+    get:
+      tags:
+      - Catálogos
+      summary: Zonas activas (público)
+      operationId: zonas_zonas_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+    post:
+      tags:
+      - Administración
+      summary: Crear zona
+      operationId: crear_zona_zonas_post
+      parameters:
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZonaIn'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '409':
+          description: CONFLICTO, TRANSICION_INVALIDA, CAPACIDAD_EXCEDIDA o ENVIO_YA_ASIGNADO
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /admin/zonas:
+    get:
+      tags:
+      - Administración
+      summary: Todas las zonas, incluidas las inactivas
+      operationId: zonas_admin_admin_zonas_get
+      parameters:
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /tipos-servicio:
+    get:
+      tags:
+      - Catálogos
+      summary: Tipos de servicio
+      operationId: tipos_servicio_tipos_servicio_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+    post:
+      tags:
+      - Administración
+      summary: Crear tipo de servicio
+      operationId: crear_tipo_servicio_tipos_servicio_post
+      parameters:
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TipoServicioIn'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '409':
+          description: CONFLICTO, TRANSICION_INVALIDA, CAPACIDAD_EXCEDIDA o ENVIO_YA_ASIGNADO
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /repartidores:
+    get:
+      tags:
+      - Catálogos
+      summary: Repartidores con capacidad y carga
+      operationId: listar_repartidores_repartidores_get
+      parameters:
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /clientes:
+    get:
+      tags:
+      - Catálogos
+      summary: Clientes (para que operación registre a su nombre)
+      operationId: listar_clientes_clientes_get
+      parameters:
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /envios:
+    post:
+      tags:
+      - Envíos
+      summary: Registrar un envío (devuelve el comprobante)
+      operationId: crear_envio_envios_post
+      parameters:
+      - name: idempotency-key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 64
+          - type: 'null'
+          description: Evita duplicados si se reintenta
+          title: Idempotency-Key
+        description: Evita duplicados si se reintenta
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NuevoEnvio'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '200':
+          description: 'Reintento con la misma Idempotency-Key: mismo envío'
+        '422':
+          description: 'VALIDACION: datos, zona o tipo de servicio inválidos'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '409':
+          description: CONFLICTO, TRANSICION_INVALIDA, CAPACIDAD_EXCEDIDA o ENVIO_YA_ASIGNADO
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+    get:
+      tags:
+      - Búsqueda
+      summary: Búsqueda operativa con filtros (PostgreSQL, pg_trgm)
+      operationId: buscar_envios_envios_get
+      parameters:
+      - name: q
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            maxLength: 100
+          - type: 'null'
+          description: Código o destinatario
+          title: Q
+        description: Código o destinatario
+      - name: estado
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Estado
+      - name: zona_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: integer
+            exclusiveMinimum: 0
+          - type: 'null'
+          title: Zona Id
+      - name: desde
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Desde
+      - name: hasta
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date
+          - type: 'null'
+          title: Hasta
+      - name: limite
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limite
+      - name: desplazamiento
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+          title: Desplazamiento
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /envios/{codigo}:
+    get:
+      tags:
+      - Envíos
+      summary: Detalle y estado actual del envío
+      operationId: detalle_envio_envios__codigo__get
+      parameters:
+      - name: codigo
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Codigo
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /envios/{codigo}/seguimiento:
+    get:
+      tags:
+      - Seguimiento
+      summary: Línea de tiempo (MongoDB; respaldo desde el outbox de PostgreSQL)
+      operationId: seguimiento_envios__codigo__seguimiento_get
+      parameters:
+      - name: codigo
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Codigo
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /envios/{codigo}/evidencia:
+    get:
+      tags:
+      - Seguimiento
+      summary: Evidencia de entrega (MongoDB)
+      operationId: evidencia_envios__codigo__evidencia_get
+      parameters:
+      - name: codigo
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Codigo
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /envios/{codigo}/estado:
+    patch:
+      tags:
+      - Envíos
+      summary: Cambiar estado (aceptado, retirado, en tránsito, incidencia, cancelado)
+      operationId: cambiar_estado_envios__codigo__estado_patch
+      parameters:
+      - name: codigo
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Codigo
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambioEstado'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '409':
+          description: CONFLICTO, TRANSICION_INVALIDA, CAPACIDAD_EXCEDIDA o ENVIO_YA_ASIGNADO
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: 'VALIDACION: estado desconocido'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+  /envios/{codigo}/aceptar-asignacion:
+    post:
+      tags:
+      - Despacho
+      summary: El repartidor acepta la asignación
+      operationId: aceptar_asignacion_envios__codigo__aceptar_asignacion_post
+      parameters:
+      - name: codigo
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Codigo
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AceptacionAsignacion'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '409':
+          description: CONFLICTO, TRANSICION_INVALIDA, CAPACIDAD_EXCEDIDA o ENVIO_YA_ASIGNADO
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /envios/{codigo}/entrega:
+    post:
+      tags:
+      - Envíos
+      summary: Confirmar entrega con evidencia
+      operationId: registrar_entrega_envios__codigo__entrega_post
+      parameters:
+      - name: codigo
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Codigo
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Entrega'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '409':
+          description: CONFLICTO, TRANSICION_INVALIDA, CAPACIDAD_EXCEDIDA o ENVIO_YA_ASIGNADO
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /asignaciones:
+    post:
+      tags:
+      - Despacho
+      summary: Asignar un repartidor a un envío
+      operationId: asignar_asignaciones_post
+      parameters:
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Asignacion'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '200':
+          description: Reintento con el mismo evento_id
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '409':
+          description: CONFLICTO, TRANSICION_INVALIDA, CAPACIDAD_EXCEDIDA o ENVIO_YA_ASIGNADO
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /asignaciones/reasignar:
+    post:
+      tags:
+      - Despacho
+      summary: Reasignar un envío a otro repartidor
+      operationId: reasignar_envio_asignaciones_reasignar_post
+      parameters:
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Asignacion'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '409':
+          description: CONFLICTO, TRANSICION_INVALIDA, CAPACIDAD_EXCEDIDA o ENVIO_YA_ASIGNADO
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /repartidores/{repartidor_id}/posicion:
+    post:
+      tags:
+      - Estado temporal
+      summary: Reportar posición simulada (Redis, expira)
+      operationId: reportar_posicion_repartidores__repartidor_id__posicion_post
+      parameters:
+      - name: repartidor_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Repartidor Id
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Coordenada'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /repartidores/{repartidor_id}/latido:
+    post:
+      tags:
+      - Estado temporal
+      summary: Latido de conexión (Redis, expira)
+      operationId: latido_repartidores__repartidor_id__latido_post
+      parameters:
+      - name: repartidor_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Repartidor Id
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /repartidores/{repartidor_id}/estado-temporal:
+    get:
+      tags:
+      - Estado temporal
+      summary: Posición y conexión vigentes
+      operationId: estado_temporal_repartidores__repartidor_id__estado_temporal_get
+      parameters:
+      - name: repartidor_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Repartidor Id
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /repartidores/{id}/capacidad:
+    patch:
+      tags:
+      - Administración
+      summary: Cambiar capacidad máxima
+      operationId: actualizar_capacidad_repartidores__id__capacidad_patch
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Id
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CapacidadUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '409':
+          description: CONFLICTO, TRANSICION_INVALIDA, CAPACIDAD_EXCEDIDA o ENVIO_YA_ASIGNADO
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /zonas/{id}:
+    put:
+      tags:
+      - Administración
+      summary: Editar o activar/desactivar zona
+      operationId: editar_zona_zonas__id__put
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZonaIn'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '409':
+          description: CONFLICTO, TRANSICION_INVALIDA, CAPACIDAD_EXCEDIDA o ENVIO_YA_ASIGNADO
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /tipos-servicio/{id}:
+    put:
+      tags:
+      - Administración
+      summary: Editar tipo de servicio
+      operationId: editar_tipo_servicio_tipos_servicio__id__put
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TipoServicioIn'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '404':
+          description: 'NO_ENCONTRADO: el recurso no existe o no es visible para este usuario'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '409':
+          description: CONFLICTO, TRANSICION_INVALIDA, CAPACIDAD_EXCEDIDA o ENVIO_YA_ASIGNADO
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '503':
+          description: 'DEPENDENCIA_NO_DISPONIBLE: una base de datos no responde (reintentable)'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /sincronizacion:
+    get:
+      tags:
+      - Salud
+      summary: Estado del sincronizador outbox → MongoDB
+      operationId: sincronizacion_sincronizacion_get
+      parameters:
+      - name: x-actor-id
+        in: header
+        required: true
+        schema:
+          type: string
+          format: uuid
+          description: UUID del usuario que realiza la petición
+          title: X-Actor-Id
+        description: UUID del usuario que realiza la petición
+      - name: x-actor-rol
+        in: header
+        required: true
+        schema:
+          type: string
+          description: cliente | operador | repartidor | admin
+          title: X-Actor-Rol
+        description: cliente | operador | repartidor | admin
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '403':
+          description: 'NO_PERMITIDO: el rol o el usuario no puede realizar la operación'
+          content:
+            application/json:
+              example:
+                error:
+                  codigo: CODIGO_ESTABLE
+                  mensaje: texto legible
+                  detalles: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    AceptacionAsignacion:
+      properties:
+        evento_id:
+          type: string
+          maxLength: 60
+          minLength: 3
+          title: Evento Id
+      type: object
+      required:
+      - evento_id
+      title: AceptacionAsignacion
+    Asignacion:
+      properties:
+        evento_id:
+          type: string
+          maxLength: 60
+          minLength: 3
+          title: Evento Id
+        envio_codigo:
+          type: string
+          maxLength: 20
+          minLength: 3
+          title: Envio Codigo
+        repartidor_id:
+          type: string
+          format: uuid
+          title: Repartidor Id
+      type: object
+      required:
+      - evento_id
+      - envio_codigo
+      - repartidor_id
+      title: Asignacion
+    CambioEstado:
+      properties:
+        evento_id:
+          type: string
+          maxLength: 60
+          minLength: 3
+          title: Evento Id
+        nuevo_estado:
+          type: string
+          maxLength: 20
+          title: Nuevo Estado
+        nota:
+          anyOf:
+          - type: string
+            maxLength: 200
+            minLength: 0
+          - type: 'null'
+          title: Nota
+        ubicacion:
+          anyOf:
+          - $ref: '#/components/schemas/Coordenada'
+          - type: 'null'
+      type: object
+      required:
+      - evento_id
+      - nuevo_estado
+      title: CambioEstado
+    CapacidadUpdate:
+      properties:
+        capacidad_max:
+          type: integer
+          maximum: 20.0
+          minimum: 1.0
+          title: Capacidad Max
+      type: object
+      required:
+      - capacidad_max
+      title: CapacidadUpdate
+    Coordenada:
+      properties:
+        lat:
+          type: number
+          maximum: 90.0
+          minimum: -90.0
+          title: Lat
+        lng:
+          type: number
+          maximum: 180.0
+          minimum: -180.0
+          title: Lng
+      type: object
+      required:
+      - lat
+      - lng
+      title: Coordenada
+    Entrega:
+      properties:
+        evento_id:
+          type: string
+          maxLength: 60
+          minLength: 3
+          title: Evento Id
+        receptor_nombre:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Receptor Nombre
+        observacion:
+          anyOf:
+          - type: string
+            maxLength: 200
+            minLength: 0
+          - type: 'null'
+          title: Observacion
+        foto_url:
+          anyOf:
+          - type: string
+            maxLength: 300
+            minLength: 0
+          - type: 'null'
+          title: Foto Url
+        firma_simulada:
+          type: boolean
+          title: Firma Simulada
+          default: true
+      type: object
+      required:
+      - evento_id
+      - receptor_nombre
+      title: Entrega
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    NuevoEnvio:
+      properties:
+        remitente:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Remitente
+        destinatario:
+          type: string
+          maxLength: 100
+          minLength: 1
+          title: Destinatario
+        origen:
+          $ref: '#/components/schemas/Coordenada'
+        destino:
+          $ref: '#/components/schemas/Coordenada'
+        origen_direccion:
+          anyOf:
+          - type: string
+            maxLength: 150
+            minLength: 0
+          - type: 'null'
+          title: Origen Direccion
+        destino_direccion:
+          anyOf:
+          - type: string
+            maxLength: 150
+            minLength: 0
+          - type: 'null'
+          title: Destino Direccion
+        zona_id:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Zona Id
+        tipo_servicio_id:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Tipo Servicio Id
+        cliente_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Cliente Id
+      type: object
+      required:
+      - remitente
+      - destinatario
+      - origen
+      - destino
+      - zona_id
+      - tipo_servicio_id
+      title: NuevoEnvio
+    TipoServicioIn:
+      properties:
+        nombre:
+          type: string
+          maxLength: 60
+          minLength: 1
+          title: Nombre
+        tarifa_base:
+          type: number
+          maximum: 999999.0
+          minimum: 0.0
+          title: Tarifa Base
+        tiempo_estimado_min:
+          type: integer
+          maximum: 10000.0
+          exclusiveMinimum: 0.0
+          title: Tiempo Estimado Min
+      type: object
+      required:
+      - nombre
+      - tarifa_base
+      - tiempo_estimado_min
+      title: TipoServicioIn
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    ZonaIn:
+      properties:
+        nombre:
+          type: string
+          maxLength: 80
+          minLength: 1
+          title: Nombre
+        activa:
+          type: boolean
+          title: Activa
+          default: true
+      type: object
+      required:
+      - nombre
+      title: ZonaIn

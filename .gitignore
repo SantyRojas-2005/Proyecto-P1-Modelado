@@ -1,0 +1,14 @@
+# Entorno
+.env
+.venv/
+__pycache__/
+*.pyc
+
+# Bases de datos locales
+db/postgres/data/
+db/mongo/data/
+db/redis/data/
+
+# OS
+.DS_Store
+Thumbs.db

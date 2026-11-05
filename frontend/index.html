@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensajería Urbana</title>
+    <!-- Bootstrap local: la web funciona sin internet -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%23212529%22/%3E%3C/svg%3E">
+    <link href="vendor/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-light bg-white border-bottom mb-4 py-3">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="#" onclick="showView('seguimiento')">Mensajería Urbana</a>
+        <div class="d-flex ms-auto align-items-center">
+            <span class="text-muted small me-2 d-none d-md-block">Sesión simulada:</span>
+            <select id="actorSelector" class="form-select form-select-sm bg-light border-0 shadow-none w-auto" onchange="updateActor()">
+                <optgroup label="Clientes">
+                    <option value="cliente" data-id="33333333-3333-3333-3333-333333333331">Cliente 1 (Tienda Andina)</option>
+                    <option value="cliente" data-id="33333333-3333-3333-3333-333333333332">Cliente 2 (Librería Sol)</option>
+                    <option value="cliente" data-id="33333333-3333-3333-3333-333333333333">Cliente 3 (Farmacia Luna)</option>
+                </optgroup>
+                <optgroup label="Operación">
+                    <option value="operador" data-id="22222222-2222-2222-2222-222222222221">Operador 1</option>
+                    <option value="operador" data-id="22222222-2222-2222-2222-222222222222">Operador 2</option>
+                </optgroup>
+                <optgroup label="Repartidores">
+                    <option value="repartidor" data-id="44444444-4444-4444-4444-444444444441">Repartidor Moto (cap. 3)</option>
+                    <option value="repartidor" data-id="44444444-4444-4444-4444-444444444442">Repartidor Bici (cap. 1)</option>
+                    <option value="repartidor" data-id="44444444-4444-4444-4444-444444444443">Repartidor Auto (cap. 2)</option>
+                    <option value="repartidor" data-id="44444444-4444-4444-4444-444444444444">Repartidor Furgón (cap. 5)</option>
+                </optgroup>
+                <optgroup label="Administración">
+                    <option value="admin" data-id="11111111-1111-1111-1111-111111111111">Administrador</option>
+                </optgroup>
+            </select>
+        </div>
+    </div>
+</nav>
+
+<div class="container pb-5">
+    <ul class="nav nav-pills mb-4 gap-2" id="mainMenu">
+        <li class="nav-item" data-roles="cliente operador admin"><a class="nav-link nav-btn rounded-pill px-4" id="nav-solicitud" href="#" onclick="showView('solicitud')">Nueva Solicitud</a></li>
+        <li class="nav-item" data-roles="cliente"><a class="nav-link nav-btn rounded-pill px-4" id="nav-misenvios" href="#" onclick="showView('misenvios')">Mis Envíos</a></li>
+        <li class="nav-item" data-roles="cliente operador repartidor admin"><a class="nav-link nav-btn rounded-pill px-4" id="nav-seguimiento" href="#" onclick="showView('seguimiento')">Seguimiento</a></li>
+        <li class="nav-item" data-roles="operador admin"><a class="nav-link nav-btn rounded-pill px-4" id="nav-despacho" href="#" onclick="showView('despacho')">Despacho</a></li>
+        <li class="nav-item" data-roles="repartidor"><a class="nav-link nav-btn rounded-pill px-4" id="nav-repartidor" href="#" onclick="showView('repartidor')">Mi Ruta</a></li>
+        <li class="nav-item" data-roles="admin"><a class="nav-link nav-btn rounded-pill px-4" id="nav-admin" href="#" onclick="showView('admin')">Admin</a></li>
+    </ul>
+
+    <div id="alertContainer"></div>
+
+    <!-- VISTA: SOLICITUD -->
+    <div id="view-solicitud" class="view-section d-none">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body p-4 p-md-5">
+                <form id="formCrearEnvio" onsubmit="crearEnvio(event)">
+                    <h4 class="mb-4 fw-bold">Registrar Envío</h4>
+                    <div class="mb-4 d-none" id="grupoCliente">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Cliente (registro por operación)</label>
+                        <select id="cliente_id" class="form-select bg-light border-0 py-2"></select>
+                    </div>
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6"><input type="text" id="remitente" maxlength="100" class="form-control bg-light border-0 py-2" placeholder="Remitente" required></div>
+                        <div class="col-md-6"><input type="text" id="destinatario" maxlength="100" class="form-control bg-light border-0 py-2" placeholder="Destinatario (ficticio)" required></div>
+                    </div>
+                    <div class="row g-4 mb-2">
+                        <div class="col-md-6"><input type="text" id="origen_dir" maxlength="150" class="form-control bg-light border-0 py-2" placeholder="Dirección de recogida (ficticia)" required></div>
+                        <div class="col-md-6"><input type="text" id="destino_dir" maxlength="150" class="form-control bg-light border-0 py-2" placeholder="Dirección de entrega (ficticia)" required></div>
+                    </div>
+                    <p class="small text-muted mb-4">Las coordenadas de origen y destino se generan de forma simulada dentro de la ciudad; no se usa GPS real.</p>
+                    <div class="row g-4 mb-5">
+                        <div class="col-md-6"><select id="zona_id" class="form-select bg-light border-0 py-2" required></select></div>
+                        <div class="col-md-6"><select id="tipo_servicio_id" class="form-select bg-light border-0 py-2" required></select></div>
+                    </div>
+                    <button type="submit" class="btn btn-dark w-100 py-3 rounded-3 fw-bold" id="btnSubmitEnvio">Confirmar Solicitud</button>
+                </form>
+                <div id="resultadoEnvio" class="d-none">
+                    <p class="text-success fw-bold mb-1">✔ Envío registrado</p>
+                    <h1 class="fw-bold text-dark display-5 mb-3" id="codigoGenerado"></h1>
+                    <div id="comprobante" class="mb-4"></div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button class="btn btn-dark px-4 rounded-pill" onclick="verSeguimiento(document.getElementById('codigoGenerado').innerText)">Ver seguimiento</button>
+                        <button class="btn btn-outline-dark px-4 rounded-pill" onclick="window.print()">Imprimir comprobante</button>
+                        <button class="btn btn-outline-secondary px-4 rounded-pill" onclick="resetFormEnvio()">Registrar otro envío</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA: MIS ENVÍOS (cliente) -->
+    <div id="view-misenvios" class="view-section d-none">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex justify-content-between mb-4">
+                    <h4 class="fw-bold">Mis Envíos</h4>
+                    <button class="btn btn-sm btn-outline-dark" onclick="cargarMisEnvios()">↻ Actualizar</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle text-nowrap">
+                        <thead class="small text-muted text-uppercase"><tr><th>Código</th><th>Destinatario</th><th>Zona</th><th>Estado</th><th>Creado</th><th></th></tr></thead>
+                        <tbody id="tablaMisEnvios"></tbody>
+                    </table>
+                </div>
+                <p class="small text-muted mb-0">Puede cancelar mientras el envío no tenga repartidor asignado. Después, la cancelación la gestiona operación.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA: SEGUIMIENTO Y DETALLE -->
+    <div id="view-seguimiento" class="view-section d-none">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body p-4 p-md-5">
+                <h4 class="mb-4 fw-bold">Rastrear Envío</h4>
+                <form class="input-group mb-4 shadow-sm rounded-3" onsubmit="event.preventDefault(); buscarSeguimiento()">
+                    <input type="text" id="inputCodigoSeguimiento" class="form-control border-0 py-3 px-4" placeholder="Ingrese el código (Ej. ENV-SEED0014)">
+                    <button class="btn btn-dark px-4" type="submit">Buscar</button>
+                </form>
+                <div id="resultadoSeguimiento" class="d-none">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                        <div>
+                            <h3 class="fw-bold mb-1" id="segCodigo"></h3>
+                            <span class="badge fs-6 text-uppercase" id="segEstado"></span>
+                        </div>
+                        <small class="text-muted" id="segActualizado"></small>
+                    </div>
+                    <div class="row g-3 mb-4" id="segDetalle"></div>
+                    <div class="alert small border-0" id="segAviso" style="display:none;"></div>
+                    <h6 class="fw-bold text-muted text-uppercase small mb-2">Línea de tiempo <span class="fw-normal" id="segFuente"></span></h6>
+                    <ul class="timeline list-unstyled mb-0" id="segTimeline"></ul>
+                    <div id="evidenciaContenedor"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA: DESPACHO -->
+    <div id="view-despacho" class="view-section d-none">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body p-4 p-md-5">
+                <div class="d-flex justify-content-between mb-4">
+                    <h4 class="fw-bold">Panel de Despacho</h4>
+                    <small class="text-muted align-self-center" id="despachoTotal"></small>
+                </div>
+                <form class="row g-2 mb-4" onsubmit="event.preventDefault(); cargarDespacho()">
+                    <div class="col-md-3"><input type="text" id="filtroQ" class="form-control bg-light border-0" placeholder="Código o destinatario"></div>
+                    <div class="col-md-2">
+                        <select id="filtroEstado" class="form-select bg-light border-0">
+                            <option value="">Todos los estados</option>
+                            <option value="creado">Creado</option>
+                            <option value="aceptado">Aceptado</option>
+                            <option value="asignado">Asignado</option>
+                            <option value="retirado">Retirado</option>
+                            <option value="en_transito">En tránsito</option>
+                            <option value="incidencia">Incidencia</option>
+                            <option value="entregado">Entregado</option>
+                            <option value="cancelado">Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2"><select id="filtroZona" class="form-select bg-light border-0"><option value="">Todas las zonas</option></select></div>
+                    <div class="col-md-2"><input type="date" id="filtroDesde" class="form-control bg-light border-0" title="Desde"></div>
+                    <div class="col-md-2"><input type="date" id="filtroHasta" class="form-control bg-light border-0" title="Hasta"></div>
+                    <div class="col-md-1"><button class="btn btn-dark w-100" type="submit">Filtrar</button></div>
+                </form>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead class="small text-muted text-uppercase"><tr><th>Código</th><th>Destinatario / Cliente</th><th>Zona</th><th>Estado</th><th>Repartidor</th><th style="min-width:280px">Acciones</th></tr></thead>
+                        <tbody id="tablaDespacho"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA: REPARTIDOR -->
+    <div id="view-repartidor" class="view-section d-none">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 rounded-4 h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between mb-4">
+                            <h4 class="fw-bold">Mis Tareas Activas</h4>
+                            <button class="btn btn-sm btn-outline-dark" onclick="cargarTareasRepartidor()">↻ Actualizar</button>
+                        </div>
+                        <div id="listaTareasRepartidor" class="d-flex flex-column gap-3"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0 rounded-4 bg-dark text-white">
+                    <div class="card-body p-4 text-center">
+                        <h5 class="fw-bold mb-2">Posición simulada (Redis)</h5>
+                        <p class="small text-secondary mb-4">Se envía cada 30 s una coordenada ficticia y un latido de conexión. Caducan a los 120 s y 60 s.</p>
+                        <div class="form-check form-switch d-flex justify-content-center gap-2 mb-3">
+                            <input class="form-check-input fs-4" type="checkbox" id="gpsToggle" onchange="toggleGPS()">
+                            <label class="form-check-label mt-1 fw-bold" for="gpsToggle">Transmisión automática</label>
+                        </div>
+                        <button class="btn btn-sm btn-outline-light" onclick="enviarPosicion()">Enviar ahora</button>
+                        <p id="redisStatus" class="small mt-3 mb-0 text-secondary">Sin datos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VISTA: ADMINISTRADOR -->
+    <div id="view-admin" class="view-section d-none">
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 rounded-4 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">Zonas</h5>
+                        <form onsubmit="guardarZona(event)" class="d-flex gap-2 mb-3">
+                            <input type="text" id="adminZonaNombre" maxlength="80" class="form-control form-control-sm" placeholder="Nueva zona" required>
+                            <button type="submit" class="btn btn-sm btn-dark">Crear</button>
+                        </form>
+                        <ul class="list-group list-group-flush" id="listaAdminZonas"></ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0 rounded-4 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">Tipos de Servicio</h5>
+                        <form onsubmit="guardarServicio(event)" class="row g-2 mb-3">
+                            <div class="col-6"><input type="text" id="adminServNombre" maxlength="60" class="form-control form-control-sm" placeholder="Nombre" required></div>
+                            <div class="col-3"><input type="number" id="adminServTarifa" min="0" step="0.01" class="form-control form-control-sm" placeholder="$ Tarifa" required></div>
+                            <div class="col-3"><input type="number" id="adminServMin" min="1" class="form-control form-control-sm" placeholder="Minutos" required></div>
+                            <div class="col-12"><button type="submit" class="btn btn-sm btn-dark w-100">Crear servicio</button></div>
+                        </form>
+                        <ul class="list-group list-group-flush" id="listaAdminServicios"></ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">Repartidores y capacidad</h5>
+                        <div class="table-responsive">
+                            <table class="table align-middle text-nowrap">
+                                <thead class="small text-muted text-uppercase">
+                                    <tr><th>Nombre</th><th>Zona</th><th>Carga actual</th><th>Capacidad máx.</th><th>Conexión</th><th></th></tr>
+                                </thead>
+                                <tbody id="tablaAdmin"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between mb-3">
+                            <h5 class="fw-bold">Estado técnico (sin credenciales)</h5>
+                            <button class="btn btn-sm btn-outline-dark" onclick="cargarEstadoTecnico()">↻ Actualizar</button>
+                        </div>
+                        <div class="row g-3" id="estadoTecnico"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: EVIDENCIA DE ENTREGA -->
+<div class="modal fade" id="modalEntrega" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold">Completar entrega: <span id="modalEnvioCodigo" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formEntrega" onsubmit="registrarEntregaFinal(event)">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Recibido por</label>
+                        <input type="text" id="evidenciaReceptor" maxlength="100" class="form-control bg-light border-0" placeholder="Nombre ficticio" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Observaciones</label>
+                        <input type="text" id="evidenciaObs" maxlength="200" class="form-control bg-light border-0" placeholder="Ej. Dejado en portería">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small text-muted text-uppercase fw-semibold">Foto de evidencia (simulada)</label>
+                        <input type="file" id="evidenciaFoto" class="form-control bg-light border-0" accept="image/*">
+                        <small class="text-muted d-block mt-1">No se sube la imagen: se guarda solo una referencia al archivo en MongoDB.</small>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 fw-bold py-2" id="btnSubmitEntrega">Confirmar entrega</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="vendor/bootstrap.bundle.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
